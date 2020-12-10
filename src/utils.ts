@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as md5 from "md5";
 import { extname } from "path";
 import { MarkdownNode, Graph } from "./types";
+import * as yaml from "js-yaml";
 
 export const findLinks = (ast: MarkdownNode): string[] => {
   if (ast.type === "link" || ast.type === "definition") {
@@ -34,29 +35,55 @@ export const findLinks = (ast: MarkdownNode): string[] => {
   return links;
 };
 
-export const findTitle = (ast: MarkdownNode): string | null => {
+export const findTitle = (ast: MarkdownNode): string | undefined => {
   if (!ast.children) {
-    return null;
+    return;
   }
 
+  const titleFromFrontmatter = getTitleFromFrontmatter();
+  const titleFromHeading = getTitleFromHeading();
+  if (!(titleFromFrontmatter || titleFromHeading)) {
+    // No title detection is enabled, might as well bail early.
+    return;
+  }
+  let title: string | undefined;
   for (const child of ast.children) {
     if (
+      titleFromFrontmatter &&
+      child.type === "yaml" &&
+      child.value
+    ) {
+      const frontmatter = yaml.safeLoad(child.value);
+      if (
+        frontmatter &&
+        frontmatter.title &&
+        typeof(frontmatter.title) === 'string'
+      ) {
+        title = frontmatter.title;
+      }
+    }
+    if (
+      titleFromHeading &&
       child.type === "heading" &&
       child.depth === 1 &&
       child.children &&
       child.children.length > 0
     ) {
-      let title = child.children[0].value!;
-
-      const titleMaxLength = getTitleMaxLength();
-      if (titleMaxLength > 0 && title.length > titleMaxLength) {
-        title = title.substr(0, titleMaxLength).concat("...");
-      }
-
-      return title;
+      title = child.children[0].value!;
+      break;
     }
   }
-  return null;
+
+  if (!title) {
+    return;
+  }
+
+  const titleMaxLength = getTitleMaxLength();
+  if (titleMaxLength > 0 && title.length > titleMaxLength) {
+    title = title.substr(0, titleMaxLength).concat("...");
+  }
+
+  return title;
 };
 
 export const id = (path: string): string => {
@@ -79,6 +106,14 @@ const settingToValue: { [key: string]: vscode.ViewColumn | undefined } = {
   seven: 7,
   eight: 8,
   nine: 9,
+};
+
+export const getTitleFromFrontmatter = () => {
+  return getConfiguration("titleFromFrontmatter");
+};
+
+export const getTitleFromHeading = () => {
+  return getConfiguration("titleFromHeading");
 };
 
 export const getTitleMaxLength = () => {

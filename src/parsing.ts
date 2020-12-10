@@ -39,7 +39,7 @@ export const parseFile = async (graph: Graph, filePath: string) => {
   const content = new TextDecoder("utf-8").decode(buffer);
   const ast: MarkdownNode = parser.parse(content);
 
-  let title: string | null = findTitle(ast);
+  let title: string | undefined = findTitle(ast);
 
   const node = graph.getNodeByPath(filePath);
   if (!title) {

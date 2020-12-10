@@ -69,6 +69,16 @@
           "type": "number",
           "default": 24,
           "description": "The maximum title length before being abbreviated. Set to 0 or less to disable."
+        },
+        "markdown-links.titleFromFrontmatter": {
+          "type": "boolean",
+          "default": false,
+          "description": "Should the value of \"title\" in YAML frontmatter be used as the title"
+        },
+        "markdown-links.titleFromHeading": {
+          "type": "boolean",
+          "default": true,
+          "description": "Should the first top-level heading be used as the title."
         }
       }
     }
@@ -104,6 +114,7 @@
   },
   "dependencies": {
     "@types/md5": "^2.2.0",
+    "js-yaml": "^3.14.1",
     "md5": "^2.2.1",
     "remark-frontmatter": "^2.0.0",
     "remark-parse": "^8.0.2",
